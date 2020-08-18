@@ -29,9 +29,9 @@ def wait_till_up(url, attempts):
 @pytest.yield_fixture()
 def registry(docker_client):
     cli = docker_client
-    cli.pull('registry', '2')
+    cli.pull('registry', '2.6.0')
     cont = cli.create_container(
-        'registry:2',
+        'registry:2.6.0',
         ports=[5000],
         host_config=cli.create_host_config(
             port_bindings={
