@@ -10,6 +10,11 @@ class DockerRegistryClient(object):
         """
         Constructor
 
+        ``auth_service_url`` is deprecated and not used anymore.
+
+        If Registry requires CAS authentication, ``username`` and ``password`` is used as an basic auth credential
+        while requesting CAS for tokens.
+
         :param host: str, registry URL including scheme
         :param verify_ssl: bool, whether to verify SSL certificate
         :param api_version: int, API version to require
@@ -17,7 +22,7 @@ class DockerRegistryClient(object):
           connecting to the registry
         :param password: password to use for basic authentication
         :param auth_service_url: authorization service URL (including scheme,
-          for v2 only)
+          for v2 only). Deprecated, not used anymore
         :param api_timeout: timeout for external request
         """
 
