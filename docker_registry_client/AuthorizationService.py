@@ -140,7 +140,7 @@ class AuthorizationService(object):
 
         if force_new_token:
             # this is very naive implementation, needs upgrades to clear only user specific cache
-            _request_token.clear_cache()
+            _request_token.cache_clear()
 
         try:
             auth_view = (self.auth[0], "****")
