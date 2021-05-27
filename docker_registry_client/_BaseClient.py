@@ -184,17 +184,23 @@ class BaseClientV2(CommonBaseClient):
         m = self.get_manifest(name, reference)
         return m._content, m._digest
 
-    def get_manifest(self, name, reference):
+    def get_manifest_and_digest_schema_2(self, name, reference):
+        m = self.get_manifest(name, reference, schema=self.schema_2)
+        return m._content, m._digest
+
+    def get_manifest(self, name, reference, schema=None):
         # self.auth.desired_scope = 'repository:%s:*' % name
+        # SEE https://stackoverflow.com/questions/25436742/how-to-delete-images-from-a-private-docker-registry
         response = self._http_response(
             self.MANIFEST, get, name=name, reference=reference,
-            schema=self.schema_1_signed,
+            # schema=self.schema_2,  # to get real digest of tag
+            schema=schema or self.schema_1_signed,
         )
-        self._cache_manifest_digest(name, reference, response=response)
+        self._cache_manifest_digest(name, reference, response=response, schema=schema)
         return _Manifest(
             content=response.json(),
             type=response.headers.get('Content-Type', 'application/json'),
-            digest=self._manifest_digests[name, reference],
+            digest=self._manifest_digests[name, reference, schema],
         )
 
     def put_manifest(self, name, reference, manifest):
@@ -219,13 +225,13 @@ class BaseClientV2(CommonBaseClient):
         return self._http_call(self.BLOB, delete,
                                name=name, digest=digest)
 
-    def _cache_manifest_digest(self, name, reference, response=None):
+    def _cache_manifest_digest(self, name, reference, response=None, schema=None):
         if not response:
             # TODO: create our own digest
             raise NotImplementedError()
 
         untrusted_digest = response.headers.get('Docker-Content-Digest')
-        self._manifest_digests[(name, reference)] = untrusted_digest
+        self._manifest_digests[(name, reference, schema)] = untrusted_digest
 
     def _fetch_and_parse_token(self, v2_401_response, force_new_token=False):
         # get token

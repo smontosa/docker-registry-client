@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 
+import json
+import functools
 from .Image import Image
 
 
@@ -85,6 +87,12 @@ class RepositoryV2(BaseRepository):
         """
         return self._client.get_manifest_and_digest(self.name, tag)
 
+    def manifest_schema_2(self, tag):
+        """
+        Return a tuple, (manifest, digest), for a given tag
+        """
+        return self._client.get_manifest_and_digest_schema_2(self.name, tag)
+
     def delete_manifest(self, digest):
         return self._client.delete_manifest(self.name, digest)
 
@@ -92,6 +100,25 @@ class RepositoryV2(BaseRepository):
         response = self._client.get_repository_tags(self.name)
         self._tags = response['tags']
 
+
+    def tag_size(self, tag):
+        manifest, digest = self.manifest_schema_2(tag)
+        return functools.reduce(lambda a, b: a+b, [item['size'] for item in manifest['layers']], 0)
+
+    def tags_by_date(self):
+        # based on https://stackoverflow.com/questions/46892589/get-latest-docker-image-creation-date-from-registry
+        latest = []
+        for tag in self.tags():
+            manifest, digest = self.manifest(tag)
+            latest.append((tag, json.loads(manifest['history'][0]['v1Compatibility']).get('created')))
+
+        # sort the list based upon created timestamp stored as the second element of the tuple
+        latest.sort(key=lambda x: x[1])
+
+        return latest
+        # return latest image tag from tuple
+        # return latest[-1][0]
+    
 
 def Repository(client, *args, **kwargs):
     if client.version == 1:
